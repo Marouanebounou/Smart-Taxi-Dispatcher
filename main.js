@@ -18,6 +18,9 @@ let requests = [
   { reqId: 1, position: 10, duration: 3, time: 0 },
   { reqId: 2, position: 3, duration: 4, time: 1 },
 ];
+rapCounteur = 1;
+let rapport = [];
+let taxiRapport = [];
 
 function start() {
   ValidatePendingRequests();
@@ -137,6 +140,7 @@ function newRequest() {
     });
     reqCounter++;
     timeCounter++;
+    console.log("Reaquest added to pending reaquests.");
   } else {
     closestTaxi(taxis, position);
     requests.push({
@@ -147,35 +151,48 @@ function newRequest() {
     });
     reqCounter++;
     timeCounter++;
+    confirmRequest(duration, position, reqCounter - 1);
   }
-  confirmRequest(duration, position);
   step();
 }
 function availableTaxisFun(taxis) {
   availableTaxis = [];
   for (let i = 0; i < taxis.length; i++) {
-    if (taxis[i].available) {
+    if (taxis[i].available == true) {
       availableTaxis.push(taxis[i]);
     }
   }
 }
-function confirmRequest(duration, position) {
+function confirmRequest(duration, position, requestId) {
   let index = theCloseOne.taxiId - 1;
   taxis[index].available = false;
   taxis[index].timeRemaining = duration;
   taxis[index].totalRides += 1;
   taxis[index].position = position;
+  fillReport(requestId, position, theCloseOne.taxiId, duration);
   console.log(`Taxi ${theCloseOne.taxiId} assigned for duration ${duration}`);
 }
 function finalRaport() {
-    
+  try {
+    for (let i = 0; i < rapport.length; i++) {
+      console.log(rapport[i]);
+    }
+    console.log(`All rides completed.\n--- Final Report ---`);
+    for (let i = 0; i < taxiRapport.length; i++) {
+      console.log(taxiRapport[i]);
+    }
+  } catch (error) {
+    console.log(error);
+  }
 }
 function closestTaxi(taxis, position) {
   theCloseOne = { position: Infinity, taxiId: 0 };
   for (let i = 0; i < taxis.length; i++) {
-    if (theCloseOne.position > Math.abs(taxis[i].position - position)) {
-      theCloseOne.position = Math.abs(taxis[i].position - position);
-      theCloseOne.taxiId = taxis[i].id;
+    if (taxis[i].available == true) {
+      if (theCloseOne.position > Math.abs(taxis[i].position - position)) {
+        theCloseOne.position = Math.abs(taxis[i].position - position);
+        theCloseOne.taxiId = taxis[i].id;
+      }
     }
   }
   console.log(
@@ -203,8 +220,22 @@ function ValidatePendingRequests() {
     let req = waitingQueue.shift();
 
     closestTaxi(taxis, req.position);
-    confirmRequest(req.duration, req.position);
+    confirmRequest(req.duration, req.position, req.reqId);
     requests.push(req);
+  }
+}
+function fillReport(requestId, position, taxiId, distance) {
+  try {
+    rapport.push(
+      `Minute ${rapCounteur++}: → Request ${requestId} at position ${position} → Taxi ${taxiId} assigned (distance: ${distance})`
+    );
+    taxiRapport.push(
+      `Taxi ${taxiId}: ${taxis[taxiId - 1].totalRides} rides, position ${
+        taxis[taxiId - 1].position
+      }`
+    );
+  } catch (error) {
+    console.log(error);
   }
 }
 
